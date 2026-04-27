@@ -1,0 +1,30 @@
+# Web framework
+fastapi==0.111.0
+uvicorn[standard]==0.30.1
+
+# Data validation
+pydantic==2.7.1
+pydantic-settings==2.3.0
+
+# Kafka
+aiokafka==0.11.0
+
+# Database (PostgreSQL async)
+sqlalchemy==2.0.30
+asyncpg==0.29.0
+
+# Redis (auth cache)
+redis[asyncio]==5.0.5
+
+# Rate limiting
+slowapi==0.1.9
+
+# Observability (OpenTelemetry)
+opentelemetry-api==1.24.0
+opentelemetry-sdk==1.24.0
+opentelemetry-instrumentation-fastapi==0.45b0
+opentelemetry-exporter-otlp-proto-grpc==1.24.0
+
+# Utils
+python-dotenv==1.0.1
+httpx==0.27.0          # tests
