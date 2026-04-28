@@ -83,6 +83,29 @@ jobs:
         run: python -m pytest tests/ -v --tb=short
 
   # ─────────────────────────────────────────────
+  # Temporal : workflow tests (time-skipping)
+  # ─────────────────────────────────────────────
+  temporal:
+    name: Temporal (workflow tests)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Run workflow tests
+        run: pnpm --filter "@beacon/temporal" test
+
+  # ─────────────────────────────────────────────
   # Security : scan des secrets
   # ─────────────────────────────────────────────
   security:
