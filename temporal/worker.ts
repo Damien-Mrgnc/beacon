@@ -7,7 +7,7 @@
 
 import { Worker, NativeConnection, Runtime, makeTelemetryFilterString } from '@temporalio/worker'
 import * as activities from './activities'
-import path from 'path'
+import * as path from 'node:path'
 
 const TEMPORAL_ADDRESS = process.env['TEMPORAL_ADDRESS'] ?? 'localhost:7233'
 const TEMPORAL_NAMESPACE = process.env['TEMPORAL_NAMESPACE'] ?? 'default'
