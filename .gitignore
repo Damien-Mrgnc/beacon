@@ -19,6 +19,9 @@ __pycache__/
 # Turbo
 .turbo/
 
+# TypeScript incremental build cache
+*.tsbuildinfo
+
 # Env files — NEVER commit these
 .env
 .env.local
