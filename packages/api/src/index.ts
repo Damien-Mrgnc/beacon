@@ -1,2 +1,2 @@
-// M08 — tRPC API implementation coming soon
+export { appRouter, createContext } from './router'
 export type { AppRouter } from './router'

@@ -1,11 +1,16 @@
-// M08 — full implementation coming soon
-import { initTRPC } from '@trpc/server'
+import { router } from './middleware/context'
+import { tenantRouter } from './routers/tenant'
+import { healthRouter } from './routers/health'
+import { alertsRouter } from './routers/alerts'
+import { eventsRouter } from './routers/events'
 
-const t = initTRPC.create()
+export { createContext } from './middleware/context'
 
-export const router = t.router
-export const publicProcedure = t.procedure
-
-export const appRouter = router({})
+export const appRouter = router({
+  tenant: tenantRouter,
+  health: healthRouter,
+  alerts: alertsRouter,
+  events: eventsRouter,
+})
 
 export type AppRouter = typeof appRouter
