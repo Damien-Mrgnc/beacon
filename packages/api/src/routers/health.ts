@@ -9,7 +9,7 @@ interface HealthHistoryRow {
 }
 
 interface CurrentScoreRow {
-  health_score: string
+  score: string
   tier: string
   computed_at: string
 }
@@ -20,7 +20,7 @@ export const healthRouter = router({
     .input(z.object({ tenantId: z.string().min(1) }))
     .query(async ({ input }) => {
       const rows = await chQuery<CurrentScoreRow>(`
-        SELECT health_score, tier, computed_at
+        SELECT score, tier, computed_at
         FROM ${CLICKHOUSE_DB}.health_scores
         WHERE tenant_id = '${input.tenantId.replace(/'/g, "\\'")}'
         ORDER BY computed_at DESC
@@ -30,7 +30,7 @@ export const healthRouter = router({
       if (rows.length === 0) return null
       const r = rows[0]!
       return {
-        healthScore: parseFloat(r.health_score),
+        healthScore: parseFloat(r.score),
         tier: r.tier as 'healthy' | 'at_risk' | 'critical',
         computedAt: r.computed_at,
       }
@@ -48,7 +48,7 @@ export const healthRouter = router({
       const rows = await chQuery<HealthHistoryRow>(`
         SELECT
           toDate(computed_at) AS day,
-          avg(health_score)   AS avg_score,
+          avg(score)   AS avg_score,
           argMax(tier, computed_at) AS tier
         FROM ${CLICKHOUSE_DB}.health_scores
         WHERE

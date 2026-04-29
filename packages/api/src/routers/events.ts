@@ -3,11 +3,10 @@ import { publicProcedure, router } from '../middleware/context'
 import { chQuery, CLICKHOUSE_DB } from '../db/clickhouse'
 
 interface LiveEventRow {
-  event_id: string
-  tenant_id: string
+  id: string
   event_type: string
   user_id: string
-  timestamp: string
+  occurred_at: string
 }
 
 interface HourlyStatRow {
@@ -27,19 +26,18 @@ export const eventsRouter = router({
     )
     .query(async ({ input }) => {
       const rows = await chQuery<LiveEventRow>(`
-        SELECT event_id, tenant_id, event_type, user_id, timestamp
+        SELECT id, event_type, user_id, occurred_at
         FROM ${CLICKHOUSE_DB}.events
         WHERE tenant_id = '${input.tenantId.replace(/'/g, "\\'")}'
-        ORDER BY timestamp DESC
+        ORDER BY occurred_at DESC
         LIMIT ${input.limit}
       `)
 
       return rows.map((r) => ({
-        eventId: r.event_id,
-        tenantId: r.tenant_id,
+        eventId: r.id,
         eventType: r.event_type,
         userId: r.user_id,
-        timestamp: r.timestamp,
+        timestamp: r.occurred_at,
       }))
     }),
 
@@ -49,9 +47,9 @@ export const eventsRouter = router({
     .query(async ({ input }) => {
       const rows = await chQuery<HourlyStatRow>(`
         SELECT
-          toStartOfHour(timestamp) AS hour,
-          countMerge(event_count)  AS event_count,
-          uniqMerge(unique_users)  AS unique_users
+          hour,
+          sum(event_count) AS event_count,
+          sum(unique_users) AS unique_users
         FROM ${CLICKHOUSE_DB}.events_hourly
         WHERE
           tenant_id = '${input.tenantId.replace(/'/g, "\\'")}'

@@ -24,17 +24,23 @@ async def get_redis() -> aioredis.Redis:
 
 
 async def get_cached_insight(tenant_id: str) -> ChurnInsight | None:
-    r = await get_redis()
-    raw = await r.get(f"{CACHE_PREFIX}{tenant_id}")
-    if raw is None:
+    try:
+        r = await get_redis()
+        raw = await r.get(f"{CACHE_PREFIX}{tenant_id}")
+        if raw is None:
+            return None
+        return ChurnInsight.model_validate_json(raw)
+    except Exception:
         return None
-    return ChurnInsight.model_validate_json(raw)
 
 
 async def set_cached_insight(insight: ChurnInsight) -> None:
-    r = await get_redis()
-    await r.setex(
-        f"{CACHE_PREFIX}{insight.tenant_id}",
-        CACHE_TTL,
-        insight.model_dump_json(),
-    )
+    try:
+        r = await get_redis()
+        await r.setex(
+            f"{CACHE_PREFIX}{insight.tenant_id}",
+            CACHE_TTL,
+            insight.model_dump_json(),
+        )
+    except Exception:
+        pass

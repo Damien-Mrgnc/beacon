@@ -121,7 +121,7 @@ services:
   # ─────────────────────────────────────────────
   redis:
     image: redis:7-alpine
-    profiles: [ingestion, api, full]
+    profiles: [ingestion, ai, api, full]
     container_name: beacon-redis
     ports:
       - "6379:6379"
@@ -171,6 +171,51 @@ services:
     environment:
       TEMPORAL_ADDRESS: temporal:7233
       TEMPORAL_CORS_ORIGINS: http://localhost:3000
+
+  # ─────────────────────────────────────────────
+  # AI SERVICE (Gemini / FastAPI)
+  # ─────────────────────────────────────────────
+  beacon-ai:
+    build:
+      context: ./services/ai
+      dockerfile: Dockerfile
+    profiles: [ai, full]
+    container_name: beacon-ai
+    ports:
+      - "8002:8002"
+    environment:
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      CLICKHOUSE_URL: http://clickhouse:8123
+      CLICKHOUSE_DB: beacon
+      CLICKHOUSE_USER: beacon
+      CLICKHOUSE_PASSWORD: beacon
+      REDIS_URL: redis://redis:6379
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  # ─────────────────────────────────────────────
+  # NEXT.JS FRONTEND
+  # ─────────────────────────────────────────────
+  web:
+    build:
+      context: .
+      dockerfile: packages/web/Dockerfile
+    profiles: [api, full]
+    container_name: beacon-web
+    ports:
+      - "3000:3000"
+    environment:
+      CLICKHOUSE_URL: http://clickhouse:8123
+      CLICKHOUSE_DB: beacon
+      CLICKHOUSE_USER: beacon
+      CLICKHOUSE_PASSWORD: beacon
+      AI_SERVICE_URL: http://beacon-ai:8002
+    depends_on:
+      clickhouse:
+        condition: service_healthy
 
 # ─────────────────────────────────────────────
 # VOLUMES

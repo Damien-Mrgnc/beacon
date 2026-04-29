@@ -27,15 +27,18 @@ async def get_insight(tenant_id: str, body: InsightRequest | None = None) -> Chu
             return cached
 
     # Fetch context
-    ctx = await fetch_tenant_context(tenant_id)
+    try:
+        ctx = await fetch_tenant_context(tenant_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Context fetch failed: {type(e).__name__}: {e}")
     if ctx is None:
         raise HTTPException(status_code=404, detail=f"Tenant '{tenant_id}' not found")
 
     # AI analysis
     try:
         insight = await analyze_tenant(ctx)
-    except ValueError as e:
-        raise HTTPException(status_code=502, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"{type(e).__name__}: {e}")
 
     # Cache result
     await set_cached_insight(insight)

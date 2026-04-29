@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS beacon.events
 ENGINE = MergeTree()
 PARTITION BY toYYYYMM(occurred_at)
 ORDER BY (tenant_id, occurred_at, event_type)
-TTL occurred_at + INTERVAL 1 YEAR DELETE
+TTL toDateTime(occurred_at) + INTERVAL 1 YEAR DELETE
 SETTINGS index_granularity = 8192;
 
 -- Index bloom filter pour recherche rapide par user_id
