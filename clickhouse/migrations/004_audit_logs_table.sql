@@ -14,5 +14,5 @@ CREATE TABLE IF NOT EXISTS beacon.audit_logs
 )
 ENGINE = MergeTree()
 ORDER BY (tenant_id, occurred_at)
-TTL occurred_at + INTERVAL 1 YEAR DELETE
+TTL toDateTime(occurred_at) + INTERVAL 1 YEAR DELETE
 SETTINGS index_granularity = 8192;

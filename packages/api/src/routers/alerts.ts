@@ -4,7 +4,7 @@ import { chQuery, CLICKHOUSE_DB } from '../db/clickhouse'
 
 interface AlertRow {
   tenant_id: string
-  health_score: string
+  score: string
   tier: string
   computed_at: string
 }
@@ -23,18 +23,21 @@ export const alertsRouter = router({
       const limit = input?.limit ?? 50
 
       const rows = await chQuery<AlertRow>(`
-        SELECT tenant_id, health_score, tier, computed_at
+        SELECT tenant_id, score, tier, computed_at
         FROM ${CLICKHOUSE_DB}.health_scores
-        WHERE
-          health_score < ${threshold}
-          AND computed_at >= now() - INTERVAL 1 HOUR
-        ORDER BY health_score ASC
+        WHERE (tenant_id, computed_at) IN (
+          SELECT tenant_id, max(computed_at)
+          FROM ${CLICKHOUSE_DB}.health_scores
+          GROUP BY tenant_id
+        )
+        AND score < ${threshold}
+        ORDER BY score ASC
         LIMIT ${limit}
       `)
 
       return rows.map((r) => ({
         tenantId: r.tenant_id,
-        healthScore: parseFloat(r.health_score),
+        healthScore: parseFloat(r.score),
         tier: r.tier as 'at_risk' | 'critical',
         computedAt: r.computed_at,
       }))

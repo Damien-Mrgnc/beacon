@@ -1,6 +1,10 @@
 import logging
 import os
 from contextlib import asynccontextmanager
+from pathlib import Path
+
+from dotenv import load_dotenv
+load_dotenv(Path(__file__).parent.parent / ".env")
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -23,6 +27,7 @@ app = FastAPI(
     description="Churn risk analysis powered by Gemini",
     version="0.1.0",
     lifespan=lifespan,
+    debug=True,
 )
 
 app.add_middleware(
