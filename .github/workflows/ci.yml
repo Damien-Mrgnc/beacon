@@ -187,6 +187,31 @@ jobs:
           echo "Waiting for Next.js..."
           timeout 120 bash -c 'until curl -sf http://localhost:3000; do sleep 2; done'
 
+      - name: Seed databases
+        run: |
+          # PostgreSQL — create tenants table + insert test tenant
+          # SHA-256 of 'test-api-key'
+          docker compose exec -T postgres psql -U beacon -d beacon -c "
+            CREATE TABLE IF NOT EXISTS tenants (
+              id            VARCHAR(64)  PRIMARY KEY,
+              name          VARCHAR(256) NOT NULL,
+              api_key_hash  VARCHAR(64)  NOT NULL,
+              plan          VARCHAR(32)  DEFAULT 'free',
+              is_active     BOOLEAN      DEFAULT TRUE,
+              created_at    TIMESTAMP    DEFAULT NOW()
+            );
+            CREATE INDEX IF NOT EXISTS ix_tenants_api_key_hash ON tenants(api_key_hash);
+            INSERT INTO tenants (id, name, api_key_hash, plan, is_active) VALUES
+              ('acme-corp', 'Acme Corporation', '4c806362b613f7496abf284146efd31da90e4b16169fe001841ca17290f427c4', 'enterprise', true),
+              ('beta-inc',  'Beta Inc',         '4c806362b613f7496abf284146efd31da90e4b16169fe001841ca17290f427c4', 'pro',        true),
+              ('gamma-llc', 'Gamma LLC',        '4c806362b613f7496abf284146efd31da90e4b16169fe001841ca17290f427c4', 'free',       true)
+            ON CONFLICT (id) DO NOTHING;
+          "
+          # ClickHouse — seed events + health scores
+          docker compose exec -T clickhouse \
+            clickhouse-client --user beacon --password beacon --database beacon \
+            < clickhouse/seeds/seed_test_data.sql
+
       - name: Run E2E tests
         working-directory: tests
         env:
