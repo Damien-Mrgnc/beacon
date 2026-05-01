@@ -209,7 +209,7 @@ jobs:
           "
           # ClickHouse — seed events + health scores
           docker compose exec -T clickhouse \
-            clickhouse-client --user beacon --password beacon --database beacon \
+            clickhouse-client --user beacon --password beacon --database beacon --multiquery \
             < clickhouse/seeds/seed_test_data.sql
 
       - name: Run E2E tests
