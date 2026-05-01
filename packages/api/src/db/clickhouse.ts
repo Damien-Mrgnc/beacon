@@ -15,11 +15,20 @@ export async function chQuery<T>(query: string): Promise<T[]> {
   url.searchParams.set('user', CLICKHOUSE_USER)
   if (CLICKHOUSE_PASSWORD) url.searchParams.set('password', CLICKHOUSE_PASSWORD)
 
-  const res = await fetch(url.toString(), {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain' },
-    body: query.trim() + '\nFORMAT JSON',
-  })
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), 8_000)
+
+  let res: Response
+  try {
+    res = await fetch(url.toString(), {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: query.trim() + '\nFORMAT JSON',
+      signal: controller.signal,
+    })
+  } finally {
+    clearTimeout(timer)
+  }
 
   if (!res.ok) {
     const text = await res.text()

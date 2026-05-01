@@ -16,12 +16,12 @@
 | M03 | Ingestion API (FastAPI, Kafka, Redis auth, OTEL) | ✅ | `0b28a37` — 21 tests |
 | M04 | Stream Processor (consumer Kafka + scoring santé) | ✅ | `1b0545f` — 17 tests |
 | M05 | ClickHouse schema (migrations, vues matérialisées, seeds) | ✅ | `50da8a0` |
-| M06 | Temporal Workflows | 🟡 | Codé, pas commité — 6 tests |
-| M07 | AI Layer (LangChain + Claude API) | 🔴 | Nécessite `ANTHROPIC_API_KEY` |
-| M08 | tRPC API (`@beacon/api`) — implem complète | 🔴 | Stub commité, implem à faire |
-| M09 | Next.js Frontend (`@beacon/web`) — implem complète | 🔴 | Stub commité, implem à faire |
-| M10 | Pulumi IaC (AWS) | 🔴 | Sprint 5 — nécessite compte AWS |
-| M11 | Tests d'intégration + README final | 🔴 | Dernier sprint |
+| M06 | Temporal Workflows | ✅ | Commité — 7 tests |
+| M07 | AI Layer (Gemini API) | ✅ | `feat/M07` — 11 tests, gemini-2.5-flash |
+| M08 | tRPC API (`@beacon/api`) — implem complète | ✅ | Commité — 6 procédures |
+| M09 | Next.js Frontend (`@beacon/web`) — implem complète | ✅ | `1ec0491` — build vert, 5 pages, dark theme |
+| M10 | Pulumi IaC (AWS) | ✅ | Pulumi preview validé — 66 ressources, 0 erreur (voir `infra/PREVIEW.txt`) |
+| M11 | Tests d'intégration + README final | ✅ | E2E Playwright 8/8 ✅ · k6 load test (1 550 events/s, 0% errors) · README enrichi |
 
 ---
 
@@ -45,6 +45,8 @@
 | ingestion | `tests/unit/test_models.py` | 13 | ✅ |
 | ingestion | `tests/unit/test_enricher.py` | 8 | ✅ |
 | processor | `tests/test_scoring.py` | 17 | ✅ |
+| temporal | `tests/churnRisk.test.ts` | 7 | ✅ |
+| ai | `tests/test_churn_analyst.py` | 11 | ✅ |
 
 ---
 
@@ -122,4 +124,4 @@ Dark theme, sobre, dense en data. Référence : Linear, Vercel dashboard, Palant
 
 ---
 
-*Dernière mise à jour : 2026-04-28*
+*Dernière mise à jour : 2026-04-30*

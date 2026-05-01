@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import asyncio
 import logging
 
@@ -37,7 +35,6 @@ def _get_tenant_dep(request: Request, db=Depends(get_db), redis=Depends(_get_red
     summary="Ingest a batch of events",
     description="Accepts up to 100 events per request. Returns 202 immediately — processing is async.",
 )
-@limiter.limit("1000/minute")
 async def ingest_batch(
     request: Request,
     batch: EventBatch,

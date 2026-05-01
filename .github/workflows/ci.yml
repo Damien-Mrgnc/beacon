@@ -151,6 +151,58 @@ jobs:
           ignore-unfixed: true
 
   # ─────────────────────────────────────────────
+  # E2E : Playwright (docker-compose full stack)
+  # ─────────────────────────────────────────────
+  e2e:
+    name: E2E (Playwright)
+    runs-on: ubuntu-latest
+    needs: [typescript, python-ingestion, python-processor]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Install Playwright browsers
+        working-directory: tests
+        run: npx playwright install --with-deps chromium
+
+      - name: Start full stack
+        run: docker compose --profile full up -d
+
+      - name: Wait for services to be healthy
+        run: |
+          echo "Waiting for ClickHouse..."
+          timeout 120 bash -c 'until curl -sf http://localhost:8123/ping; do sleep 2; done'
+          echo "Waiting for Ingestion API..."
+          timeout 120 bash -c 'until curl -sf http://localhost:8000/health; do sleep 2; done'
+          echo "Waiting for Next.js..."
+          timeout 120 bash -c 'until curl -sf http://localhost:3000; do sleep 2; done'
+
+      - name: Run E2E tests
+        working-directory: tests
+        env:
+          BASE_URL: http://localhost:3000
+          API_URL:  http://localhost:8000
+        run: npx playwright test
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: tests/playwright-report/
+          retention-days: 7
+
+  # ─────────────────────────────────────────────
   # Docker : build des images (services existants uniquement)
   # ─────────────────────────────────────────────
   docker-build:
@@ -158,8 +210,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        # Ajouter 'ai' quand le service sera implémenté (M07)
-        service: [ingestion, processor]
+        service: [ingestion, processor, ai]
       fail-fast: false
     steps:
       - uses: actions/checkout@v4

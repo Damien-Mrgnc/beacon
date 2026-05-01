@@ -28,3 +28,4 @@ opentelemetry-exporter-otlp-proto-grpc==1.24.0
 # Utils
 python-dotenv==1.0.1
 httpx==0.27.0          # tests
+setuptools>=70.0.0     # pkg_resources (required by opentelemetry-instrumentation)
