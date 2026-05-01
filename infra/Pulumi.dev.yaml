@@ -1,0 +1,9 @@
+config:
+  aws:region: eu-west-1
+  beacon:env: dev
+  beacon:vpcCidr: "10.0.0.0/16"
+  beacon:clickhouseInstanceType: "t3.large"
+  beacon:ingestionDesiredCount: 2
+  beacon:processorDesiredCount: 1
+  beacon:aiDesiredCount: 1
+  beacon:webDesiredCount: 2

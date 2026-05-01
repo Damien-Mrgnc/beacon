@@ -1,0 +1,8 @@
+{
+  "extends": "@beacon/tsconfig/base.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "."
+  },
+  "include": ["*.ts", "components/**/*.ts", "config/**/*.ts"]
+}

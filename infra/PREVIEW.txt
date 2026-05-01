@@ -1,0 +1,116 @@
+Beacon — Pulumi Preview (M10)
+Date    : 2026-04-30
+Stack   : beacon / dev
+Region  : eu-west-1
+Compte  : arn:aws:iam::882498817536:user/Damien
+Preview : https://app.pulumi.com/Damien-Mrgnc/beacon/dev/previews/faa1b7d4-01cb-46d5-b2e7-7f194f457dc1
+
+────────────────────────────────────────────────────────────────────
+RÉSULTAT : 66 ressources à créer — 0 erreur
+────────────────────────────────────────────────────────────────────
+
+Ressources planifiées :
+
+  RÉSEAU (10)
+  + aws:ec2:Vpc                       beacon-dev-vpc
+  + aws:ec2:InternetGateway           beacon-dev-igw
+  + aws:ec2:Subnet                    beacon-dev-public-0
+  + aws:ec2:Subnet                    beacon-dev-public-1
+  + aws:ec2:Subnet                    beacon-dev-private-0
+  + aws:ec2:Subnet                    beacon-dev-private-1
+  + aws:ec2:Eip                       beacon-dev-nat-eip-0
+  + aws:ec2:Eip                       beacon-dev-nat-eip-1
+  + aws:ec2:NatGateway                beacon-dev-nat-0
+  + aws:ec2:NatGateway                beacon-dev-nat-1
+
+  ROUTING (6)
+  + aws:ec2:RouteTable                beacon-dev-rt-public
+  + aws:ec2:RouteTable                beacon-dev-rt-private-0
+  + aws:ec2:RouteTable                beacon-dev-rt-private-1
+  + aws:ec2:RouteTableAssociation     beacon-dev-rta-public-0
+  + aws:ec2:RouteTableAssociation     beacon-dev-rta-public-1
+  + aws:ec2:RouteTableAssociation     beacon-dev-rta-private-0
+  + aws:ec2:RouteTableAssociation     beacon-dev-rta-private-1
+
+  SECURITY GROUPS (6)
+  + aws:ec2:SecurityGroup             beacon-dev-sg-alb
+  + aws:ec2:SecurityGroup             beacon-dev-sg-ingestion
+  + aws:ec2:SecurityGroup             beacon-dev-sg-processor
+  + aws:ec2:SecurityGroup             beacon-dev-sg-ai
+  + aws:ec2:SecurityGroup             beacon-dev-sg-web
+  + aws:ec2:SecurityGroup             beacon-dev-sg-data
+
+  REGISTRE (8)
+  + aws:ecr:Repository                beacon-dev-ingestion
+  + aws:ecr:Repository                beacon-dev-processor
+  + aws:ecr:Repository                beacon-dev-ai
+  + aws:ecr:Repository                beacon-dev-web
+  + aws:ecr:LifecyclePolicy           beacon-dev-ingestion-lifecycle
+  + aws:ecr:LifecyclePolicy           beacon-dev-processor-lifecycle
+  + aws:ecr:LifecyclePolicy           beacon-dev-ai-lifecycle
+  + aws:ecr:LifecyclePolicy           beacon-dev-web-lifecycle
+
+  DONNÉES (5)
+  + aws:ec2:Instance                  beacon-dev-clickhouse   (t3.large, 100 Go EBS)
+  + aws:elasticache:SubnetGroup       beacon-dev-redis-subnets
+  + aws:elasticache:Cluster           beacon-dev-redis        (cache.t3.micro)
+  + aws:msk:Cluster                   beacon-dev-kafka        (kafka.t3.small x2)
+  + aws:secretsmanager:Secret         beacon-dev-secret-clickhouse
+  + aws:secretsmanager:Secret         beacon-dev-secret-gemini
+  + aws:secretsmanager:Secret         beacon-dev-secret-kafka
+  + aws:secretsmanager:SecretVersion  beacon-dev-secret-clickhouse-v1
+  + aws:secretsmanager:SecretVersion  beacon-dev-secret-gemini-v1
+  + aws:secretsmanager:SecretVersion  beacon-dev-secret-kafka-v1
+
+  CLUSTER ECS (6)
+  + aws:ecs:Cluster                   beacon-dev-cluster
+  + aws:ecs:ClusterCapacityProviders  beacon-dev-cluster-cp
+  + aws:cloudwatch:LogGroup           beacon-dev-logs
+  + aws:iam:Role                      beacon-dev-exec-role
+  + aws:iam:Role                      beacon-dev-task-role
+  + aws:iam:RolePolicyAttachment      beacon-dev-exec-role-ecr
+  + aws:iam:RolePolicy                beacon-dev-exec-role-secrets
+  + aws:iam:RolePolicy                beacon-dev-task-role-obs
+
+  SERVICES FARGATE + ALB (15)
+  + aws:lb:LoadBalancer               beacon-dev-alb
+  + aws:lb:Listener                   beacon-dev-listener-http
+  + aws:lb:TargetGroup                beacon-dev-tg-ingestion
+  + aws:lb:TargetGroup                beacon-dev-tg-ai
+  + aws:lb:TargetGroup                beacon-dev-tg-web
+  + aws:lb:ListenerRule               beacon-dev-lr-ingestion
+  + aws:lb:ListenerRule               beacon-dev-lr-ai
+  + aws:lb:ListenerRule               beacon-dev-lr-web
+  + aws:ecs:TaskDefinition            beacon-dev-td-ingestion
+  + aws:ecs:TaskDefinition            beacon-dev-td-processor
+  + aws:ecs:TaskDefinition            beacon-dev-td-ai
+  + aws:ecs:TaskDefinition            beacon-dev-td-web
+  + aws:ecs:Service                   beacon-dev-svc-ingestion
+  + aws:ecs:Service                   beacon-dev-svc-processor
+  + aws:ecs:Service                   beacon-dev-svc-ai
+  + aws:ecs:Service                   beacon-dev-svc-web
+
+────────────────────────────────────────────────────────────────────
+OUTPUTS (résolus après déploiement)
+────────────────────────────────────────────────────────────────────
+
+  stackInfo.env    : "dev"
+  stackInfo.prefix : "beacon-dev"
+  stackInfo.region : "eu-west-1"
+
+  endpoints.alb        : [résolu au déploiement]
+  endpoints.ingestion  : [résolu au déploiement]
+  endpoints.web        : [résolu au déploiement]
+
+  ecrRepos.ingestion   : [résolu au déploiement]
+  ecrRepos.processor   : [résolu au déploiement]
+  ecrRepos.ai          : [résolu au déploiement]
+  ecrRepos.web         : [résolu au déploiement]
+
+  networking.vpcId         : [résolu au déploiement]
+  networking.publicSubnets : [résolu au déploiement]
+  networking.privateSubnets: [résolu au déploiement]
+
+  data_outputs.kafkaBrokers  : [résolu au déploiement]
+  data_outputs.redisEndpoint : [résolu au déploiement]
+  data_outputs.clickhouseIp  : [résolu au déploiement]
