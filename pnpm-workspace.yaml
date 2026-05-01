@@ -2,3 +2,4 @@ packages:
   - "packages/*"
   - "temporal"
   - "infra"
+  - "tests"
