@@ -13,8 +13,6 @@
 
 Beacon ingests product events from enterprise customers in real-time, computes their health score every 30 seconds, generates AI-powered churn risk analysis, and orchestrates automated onboarding workflows — all in a single platform.
 
-**Built for Field Deployment Engineers** — demonstrates full ownership from SDK design to production infrastructure on AWS.
-
 ---
 
 ## Tech Stack

@@ -238,7 +238,7 @@ services:
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       MISTRAL_API_KEY: ${MISTRAL_API_KEY:-}
-      PROVIDER_PRIORITY: ${PROVIDER_PRIORITY:-anthropic,openai,gemini,mistral}
+      PROVIDER_PRIORITY: ${PROVIDER_PRIORITY:-mistral,anthropic,openai,gemini}
       CLICKHOUSE_URL: http://clickhouse:8123
       CLICKHOUSE_HOST: clickhouse
       CLICKHOUSE_PORT: "9000"

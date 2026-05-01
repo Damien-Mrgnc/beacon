@@ -1,3 +1,2 @@
-// M02 — SDK implementation coming soon
 export { BeaconSDK } from './client'
-export type { BeaconConfig, BeaconEvent } from './types'
+export type { BatchPayload, BatchResponse, BeaconConfig, BeaconEvent } from './types'
