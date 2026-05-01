@@ -1,104 +1,44 @@
 """
-ChurnAnalyst — core AI agent.
+ChurnAnalyst — routes to the best available AI provider.
 
-Fetches tenant context from ClickHouse, calls Gemini,
-returns a structured ChurnInsight.
+The provider is selected at runtime based on which API keys are configured
+(see providers/router.py). Priority: anthropic > openai > gemini > mistral.
+
+_extract_json and _parse_response are re-exported here for backward compatibility
+with existing unit tests.
 """
 
-import json
-import os
-import re
 import logging
 
-import google.generativeai as genai
+from api.models.insights import ChurnInsight, TenantContext
 
-from api.models.insights import (
-    ChurnInsight,
-    RecommendedAction,
-    RiskFactor,
-    RiskLevel,
-    TenantContext,
-)
-from prompts.churn_analysis import SYSTEM_PROMPT, build_analysis_prompt
+# Re-export parsing utilities so tests can import them from this module
+from providers.utils import extract_json as _extract_json  # noqa: F401
+from providers.utils import parse_response as _parse_response  # noqa: F401
 
 logger = logging.getLogger(__name__)
-
-GEMINI_API_KEY = os.environ["GEMINI_API_KEY"]
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
-
-
-def _get_model() -> genai.GenerativeModel:
-    genai.configure(api_key=GEMINI_API_KEY)
-    return genai.GenerativeModel(
-        model_name=GEMINI_MODEL,
-        system_instruction=SYSTEM_PROMPT,
-        generation_config=genai.GenerationConfig(
-            temperature=0.2,          # low temp = consistent, factual output
-            response_mime_type="application/json",
-        ),
-    )
-
-
-def _extract_json(text: str) -> dict:
-    """Extract JSON from model response, handling markdown code blocks."""
-    # Strip ```json ... ``` if present
-    match = re.search(r"```(?:json)?\s*([\s\S]*?)```", text)
-    if match:
-        text = match.group(1)
-    return json.loads(text.strip())
-
-
-def _parse_response(raw: dict, ctx: TenantContext) -> ChurnInsight:
-    risk_factors = [
-        RiskFactor(
-            signal=rf["signal"],
-            description=rf["description"],
-            severity=RiskLevel(rf["severity"]),
-        )
-        for rf in raw.get("risk_factors", [])
-    ]
-
-    actions = [
-        RecommendedAction(
-            priority=a["priority"],
-            action=a["action"],
-            rationale=a["rationale"],
-        )
-        for a in raw.get("recommended_actions", [])
-    ]
-
-    return ChurnInsight(
-        tenant_id=ctx.tenant_id,
-        health_score=ctx.health_score,
-        tier=ctx.tier,
-        diagnosis=raw["diagnosis"],
-        risk_factors=risk_factors,
-        recommended_actions=sorted(actions, key=lambda a: a.priority),
-        confidence=float(raw.get("confidence", 0.7)),
-        model_used=GEMINI_MODEL,
-    )
 
 
 async def analyze_tenant(ctx: TenantContext) -> ChurnInsight:
     """
-    Main entry point — call Gemini with tenant context, return structured insight.
-    Raises ValueError if Gemini returns unparseable output.
+    Run churn analysis using the highest-priority configured AI provider.
+
+    Raises:
+        NoProviderAvailableError: if no API key is set in the environment.
+        ValueError: if the provider returns unparseable output.
     """
-    model = _get_model()
-    prompt = build_analysis_prompt(ctx)
+    from providers.router import get_provider
 
-    logger.info("Calling Gemini for tenant %s (score=%.3f)", ctx.tenant_id, ctx.health_score)
+    provider = get_provider()
+    logger.info(
+        "Analyzing tenant %s with %s (score=%.3f)",
+        ctx.tenant_id,
+        provider.name,
+        ctx.health_score,
+    )
 
-    response = model.generate_content(prompt)
-    text = response.text
+    insight = await provider.analyze(ctx)
 
-    try:
-        raw = _extract_json(text)
-    except (json.JSONDecodeError, AttributeError) as e:
-        logger.error("Failed to parse Gemini response: %s\nRaw: %s", e, text)
-        raise ValueError(f"Gemini returned invalid JSON: {e}") from e
-
-    insight = _parse_response(raw, ctx)
     logger.info(
         "Analysis complete for %s — %d risk factors, confidence=%.2f",
         ctx.tenant_id,

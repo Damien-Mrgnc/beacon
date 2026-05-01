@@ -1,5 +1,5 @@
 """
-Unit tests for ChurnAnalyst — Gemini is mocked, no API calls made.
+Unit tests for ChurnAnalyst — providers are mocked, no real API calls made.
 """
 
 import json
@@ -39,7 +39,7 @@ HEALTHY_TENANT = TenantContext(
     event_count_24h=4200,
 )
 
-GEMINI_RESPONSE = {
+MOCK_RESPONSE = {
     "diagnosis": "Sharp DAU decline of 89% over 30 days combined with 18% error rate suggests a critical integration failure.",
     "risk_factors": [
         {"signal": "DAU collapse", "description": "From 28 to 3 daily users in 30 days", "severity": "critical"},
@@ -54,15 +54,15 @@ GEMINI_RESPONSE = {
 }
 
 
-def make_mock_model(response_dict: dict) -> MagicMock:
-    mock_response = MagicMock()
-    mock_response.text = json.dumps(response_dict)
-    mock_model = MagicMock()
-    mock_model.generate_content.return_value = mock_response
-    return mock_model
+def make_mock_provider(response_dict: dict, model_name: str = "mock-model") -> AsyncMock:
+    insight = _parse_response(response_dict, CRITICAL_TENANT, model_name)
+    provider = AsyncMock()
+    provider.name = model_name
+    provider.analyze.return_value = insight
+    return provider
 
 
-# ── Unit tests ────────────────────────────────────────────────────────────────
+# ── _extract_json ─────────────────────────────────────────────────────────────
 
 class TestExtractJson:
     def test_plain_json(self):
@@ -82,14 +82,16 @@ class TestExtractJson:
             _extract_json("not json at all")
 
 
+# ── _parse_response ───────────────────────────────────────────────────────────
+
 class TestParseResponse:
     def test_parses_risk_factors(self):
-        insight = _parse_response(GEMINI_RESPONSE, CRITICAL_TENANT)
+        insight = _parse_response(MOCK_RESPONSE, CRITICAL_TENANT)
         assert len(insight.risk_factors) == 3
         assert insight.risk_factors[0].severity == RiskLevel.CRITICAL
 
     def test_actions_sorted_by_priority(self):
-        response = {**GEMINI_RESPONSE, "recommended_actions": [
+        response = {**MOCK_RESPONSE, "recommended_actions": [
             {"priority": 2, "action": "B", "rationale": "r"},
             {"priority": 1, "action": "A", "rationale": "r"},
         ]}
@@ -98,42 +100,56 @@ class TestParseResponse:
         assert insight.recommended_actions[1].priority == 2
 
     def test_tenant_data_preserved(self):
-        insight = _parse_response(GEMINI_RESPONSE, CRITICAL_TENANT)
+        insight = _parse_response(MOCK_RESPONSE, CRITICAL_TENANT)
         assert insight.tenant_id == "gamma-llc"
         assert insight.health_score == 0.22
         assert insight.tier == "critical"
 
     def test_confidence_parsed(self):
-        insight = _parse_response(GEMINI_RESPONSE, CRITICAL_TENANT)
+        insight = _parse_response(MOCK_RESPONSE, CRITICAL_TENANT)
         assert insight.confidence == 0.88
 
+    def test_model_name_set(self):
+        insight = _parse_response(MOCK_RESPONSE, CRITICAL_TENANT, "claude-opus-4-6")
+        assert insight.model_used == "claude-opus-4-6"
+
+
+# ── analyze_tenant ────────────────────────────────────────────────────────────
 
 class TestAnalyzeTenant:
     @pytest.mark.asyncio
-    async def test_calls_gemini_and_returns_insight(self):
-        mock_model = make_mock_model(GEMINI_RESPONSE)
-        with patch("agents.churn_analyst._get_model", return_value=mock_model):
+    async def test_calls_provider_and_returns_insight(self):
+        mock_provider = make_mock_provider(MOCK_RESPONSE)
+        with patch("providers.router.get_provider", return_value=mock_provider):
             insight = await analyze_tenant(CRITICAL_TENANT)
 
         assert insight.tenant_id == "gamma-llc"
-        assert insight.diagnosis == GEMINI_RESPONSE["diagnosis"]
+        assert insight.diagnosis == MOCK_RESPONSE["diagnosis"]
         assert len(insight.risk_factors) == 3
-        mock_model.generate_content.assert_called_once()
+        mock_provider.analyze.assert_called_once_with(CRITICAL_TENANT)
 
     @pytest.mark.asyncio
-    async def test_raises_on_invalid_gemini_output(self):
-        mock_response = MagicMock()
-        mock_response.text = "this is not json"
-        mock_model = MagicMock()
-        mock_model.generate_content.return_value = mock_response
-
-        with patch("agents.churn_analyst._get_model", return_value=mock_model):
-            with pytest.raises(ValueError, match="invalid JSON"):
+    async def test_raises_when_no_provider_configured(self):
+        from providers.router import NoProviderAvailableError
+        with patch("providers.router.get_provider", side_effect=NoProviderAvailableError("no key set")):
+            with pytest.raises(NoProviderAvailableError):
                 await analyze_tenant(CRITICAL_TENANT)
 
     @pytest.mark.asyncio
     async def test_healthy_tenant_still_analyzed(self):
-        mock_model = make_mock_model({**GEMINI_RESPONSE, "confidence": 0.4})
-        with patch("agents.churn_analyst._get_model", return_value=mock_model):
+        mock_provider = AsyncMock()
+        mock_provider.name = "mock-model"
+        mock_provider.analyze.return_value = _parse_response(
+            {**MOCK_RESPONSE, "confidence": 0.4}, HEALTHY_TENANT, "mock-model"
+        )
+        with patch("providers.router.get_provider", return_value=mock_provider):
             insight = await analyze_tenant(HEALTHY_TENANT)
         assert insight.tenant_id == "acme-corp"
+        assert insight.confidence == 0.4
+
+    @pytest.mark.asyncio
+    async def test_model_used_reflects_active_provider(self):
+        mock_provider = make_mock_provider(MOCK_RESPONSE, model_name="claude-opus-4-6")
+        with patch("providers.router.get_provider", return_value=mock_provider):
+            insight = await analyze_tenant(CRITICAL_TENANT)
+        assert insight.model_used == "claude-opus-4-6"

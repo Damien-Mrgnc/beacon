@@ -3,7 +3,13 @@ uvicorn[standard]==0.29.0
 pydantic==2.10.6
 pydantic-settings==2.7.0
 python-dotenv==1.0.1
+
+# AI providers — install all, only the ones with a key set are used at runtime
 google-generativeai==0.7.2
+anthropic>=0.30.0
+openai>=1.40.0
+mistralai>=1.0.0
+
 clickhouse-driver==0.2.10
 redis==5.0.4
 httpx==0.27.0
